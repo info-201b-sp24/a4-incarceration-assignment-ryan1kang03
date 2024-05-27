@@ -45,7 +45,7 @@ Incarceration in the United States is continuously rising at unprecedented level
 
 Using the dataset provided by the Vera Institute, I calculated the following key values with this code:
 
-```{r calculate summary, echo=FALSE, message=FALSE, warning=FALSE}
+```{r summary, echo=FALSE, message=FALSE, warning=FALSE}
 # Load the dataset
 url <- "https://raw.githubusercontent.com/melaniewalsh/Neat-Datasets/main/us-prison-jail-rates.csv"
 data <- read.csv(url)
