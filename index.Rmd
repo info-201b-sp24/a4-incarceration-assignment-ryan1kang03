@@ -1,6 +1,6 @@
 ---
-Title: "A5: Incarceration"
-Author: "Ryan Kang"
+title: "A5: Incarceration"
+author: "Ryan Kang"
 output: html_document
 ---
 
