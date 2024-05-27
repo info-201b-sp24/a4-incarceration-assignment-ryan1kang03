@@ -1,71 +1,199 @@
 ---
-title: "A3: Incarceration"
+Title: "A5: Incarceration"
+Author: "Ryan Kang"
 output: html_document
 ---
 
+```{r setup, include=FALSE}
+# Set CRAN mirror
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+
+# Install required packages
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  install.packages("ggplot2")
+}
+if (!requireNamespace("dplyr", quietly = TRUE)) {
+  install.packages("dplyr")
+}
+if (!requireNamespace("leaflet", quietly = TRUE)) {
+  install.packages("leaflet")
+}
+if (!requireNamespace("tidyr", quietly = TRUE)) {
+  install.packages("tidyr")
+}
+if (!requireNamespace("maps", quietly = TRUE)) {
+  install.packages("maps")
+}
+if (!requireNamespace("viridis", quietly = TRUE)) {
+  install.packages("viridis")
+}
+
+# Load required packages
+library(ggplot2)
+library(dplyr)
+library(leaflet)
+library(tidyr)
+library(maps)
+library(viridis)
+```
+
 ### Introduction
 
-An introduction of the problem domain and a description of the variable(s) you are choosing to analyze (and why!)
+Incarceration in the United States is continuously rising at unprecedented levels, with our coutry having the highest incarceration rate globally. Racial disparities are a significant reason for this issue, particularly affecting Black Americans who are incarcerated at much higher percentages than any other race, while being a minority of the country. I will focus on the prison and jail populations over time For this analysis, figuring out the variables that affect race and gender in incarceration. The variables chosen for include the incarceration rates per 100,000 people for different racial groups and genders, as well as the total incarceration rates for different states and counties provided from the Vera institute. These variables will help illustrate the systemic racism and gender disparities in the U.S. criminal justice system.
 
 ### Summary Information
 
-Write a summary paragraph of findings that includes the 5 values calculated from your summary information R script
+Using the dataset provided by the Vera Institute, I calculated the following key values with this code:
 
-These will likely be calculated using your DPLYR skills, answering questions such as: 
+```{r calculate summary, echo=FALSE, message=FALSE, warning=FALSE}
+# Load the dataset
+url <- "https://raw.githubusercontent.com/melaniewalsh/Neat-Datasets/main/us-prison-jail-rates.csv"
+data <- read.csv(url)
 
-- What is the average value of my variable across all the counties (in the current year)?
-- Where is my variable the highest / lowest?
-- How much has my variable change over the last N years?
+# Find the most recent year in the data
+recent_year <- max(data$year, na.rm = TRUE)
 
-Feel free to calculate and report values that you find relevant. Again, remember that the purpose is to think about how these measure of incarceration vary by race.
+# Filter the data for the most recent year
+recent_data <- data %>% filter(year == recent_year)
+
+# Calculate the average incarceration rate for the most recent year
+average_incarceration_rate <- mean(recent_data$total_jail_pop_rate, na.rm = TRUE)
+
+# Find the highest and lowest incarceration rates
+highest_incarceration_rate <- max(recent_data$total_jail_pop_rate, na.rm = TRUE)
+lowest_incarceration_rate <- min(recent_data$total_jail_pop_rate, na.rm = TRUE)
+county_highest_rate <- recent_data$county_name[which.max(recent_data$total_jail_pop_rate)]
+county_lowest_rate <- recent_data$county_name[which.min(recent_data$total_jail_pop_rate)]
+
+# Calculate the change in incarceration rate for Black Americans over the last N years
+start_year <- 1990
+end_year <- recent_year
+black_incarceration_start <- mean(data$black_jail_pop_rate[data$year == start_year], na.rm = TRUE)
+black_incarceration_end <- mean(data$black_jail_pop_rate[data$year == end_year], na.rm = TRUE)
+black_incarceration_change <- ((black_incarceration_end - black_incarceration_start) / black_incarceration_start) * 100
+
+# Calculate the gender disparity in the most recent year
+male_incarceration_rate <- mean(recent_data$male_jail_pop_rate, na.rm = TRUE)
+female_incarceration_rate <- mean(recent_data$female_jail_pop_rate, na.rm = TRUE)
+gender_disparity <- male_incarceration_rate / female_incarceration_rate
+```
+
+- The average incarceration rate across all counties in the most recent year available is `r format(round(average_incarceration_rate, 2), nsmall = 2)` per 100,000 people.
+- The highest incarceration rate is found in `r county_highest_rate`, with a rate of `r format(round(highest_incarceration_rate, 2), nsmall = 2)` per 100,000 people.
+- The lowest incarceration rate is found in `r county_lowest_rate`, with a rate of `r format(round(lowest_incarceration_rate, 2), nsmall = 2)` per 100,000 people.
+- Over the last `r end_year - start_year` years, the incarceration rate for Black Americans has changed by `r format(round(black_incarceration_change, 2), nsmall = 2)`%.
+- The gender disparity is evident, with men being incarcerated at a rate `r format(round(gender_disparity, 2), nsmall = 2)` times higher than women.
+
+The variables demonstrate how Black American incarceration has actually decreased from 1990 to 2018. However, it does not remove the fact that Black Americans are still incarcerated at a much higher rate, and how there must be more targeted reforms, seeing how much more men are incarcerated as well.
 
 ### The Dataset
 
-Who collected the data?  
-How was the data collected or generated?  
-Why was the data collected?  
-How many observations (rows) are in your data?  
-How many features (columns) are in the data?  
-What, if any, ethical questions or questions of power do you need to consider when working with this data?  
-What are possible limitations or problems with this data?   (at least 200 words)
+- The data for this analysis was collected by the Vera Institute of Justice--non-profit organization focused on criminal justice reform. 
+- The data was collected by the U.S. Department of Justice Bureau of Justice Statistics (BJS), supplemented with data from state department correction facilities when the federal data is not available. I generated the data utilizing Rmarkdown code, to simplify the necessary variable and calculations seen above.
+- The data was collected to provide a comprehensive overview of the incarceration rates in the United States, including the total prison population, jail population, and demographic breakdown, including race and gender.
+- The dataset contains approximately 160,000 rows.
+- The dataset contains 20 columns including variables such as the year, state, county, total prison population, jail population, and demographic breakdown, and more miscellaneous variables such as the total jail population rate, total prison population rate, and the total incarceration rate.
+- When working with this data, ethical considerations must be taken into account, particularly when analyzing the race and gender disparities in the U.S. justice systems of the data. It is important to consider the power dynamics and the potential for reinforcing stereotypes or biases in the data analysis.
 
+The data is collected by the U.S. Department of Justice Bureau of Justice Statistics, supplemented with data from state department correction facilities when the federal data is not available. This pushes certain limitations, as this means that the data is collected by the government, which may induce biases that they might hide to the public. For example, the data may not be collected consistently across all states, or there may be discrepancies in how the data is collected or reported, so that the country seems more "just" than it really is. Additionally, with so many factors in play and discrepancies, it is inevitable that the data will have its inaccuracies and inconsistencies in the data, which could affect the results of the analysis. The data may not capture all aspects of the criminal justice system, such as the impact of policing practices or sentencing policies. Those issues are widespread within our country, and may provide biased results to such datasets as they play a factor in incarcerating victims. This could limit the scope of the analysis and prevent a comprehensive understanding of the issues at hand. The data may also not capture the full extent of racial disparities in the criminal justice system, as it may not include data on other marginalized groups, as well as the gender disparities in the criminal justice system. This could limit the ability to identify and address the root causes of these disparities and develop effective solutions.
 
 ### Trends Over Time Chart
 
-Include a chart. Make sure to describe why you included the chart, and what patterns emerged
+The following chart shows the trend of incarceration rates over time for Black and White Americans. It illustrates the significant racial disparities in incarceration rates and how these have evolved over the years, whether for the better or worse.
 
-The first chart that you will create and include will show the trend over time of your variable/topic. Think carefully about what you want to communicate to your user (you may have to find relevant trends in the dataset first!). Here are some requirements to help guide your design:
+```{r race trends, echo = FALSE}
+# Data processing
+data_filtered <- data %>%
+  filter(year >= 1990, !is.na(black_jail_pop_rate), !is.na(white_jail_pop_rate)) %>%
+  group_by(year) %>%
+  summarize(black_jail_pop_rate = mean(black_jail_pop_rate, na.rm = TRUE),
+            white_jail_pop_rate = mean(white_jail_pop_rate, na.rm = TRUE)) %>%
+  pivot_longer(cols = c(black_jail_pop_rate, white_jail_pop_rate),
+               names_to = "Race",
+               values_to = "IncarcerationRate")
 
-- Show more than one, but fewer than ~10 trends
-  - This may mean showing the same measure for different locations or different racial groups. Think carefully about a meaningful comparison of locations (e.g., the top 10 counties in a state, top 10 states, etc.)
-- You must have clear x and y axis labels
-- The chart needs a clear title 
-- You need a legend for your different line colors and a clear legend title
-
-When we say "clear" or "human readable" titles and labels, that means that you should not just display the variable name.
-
-Here's an example of how to run an R script inside an RMarkdown file:
-
-``````{r, echo = FALSE, code = readLines("chart1_example.R")}
+# Create the trend chart
+ggplot(data_filtered, aes(x=year, y=IncarcerationRate, color=Race)) +
+  geom_line() +
+  labs(title="Incarceration Rates Over Time by Race", x="Year", y="Incarceration Rate per 100,000 People") +
+  theme_minimal() +
+  scale_color_manual(values=c("black_jail_pop_rate"="black", "white_jail_pop_rate"="blue")) +
+  theme(legend.title = element_blank())
 ```
+
+- The chart clearly shows the Incarceration Rates per 100,000 people
+- The chart shows the trend of incarceration rates over time for Black and White Americans
+- Despite the incarceration rates for black Americans decreasing over time, it is still significantly higher than that of white Americans
 
 ### Variable Comparison Chart
 
-Include a chart. Make sure to describe why you included the chart, and what patterns emerged
+This chart shows the gender disparities within incarceration rates, for males and females across different states.
 
-The second chart that you will create and include will show how two different (continuous) variables are related to one another. Again, think carefully about what such a comparison means and what you want to communicate to your user (you may have to find relevant trends in the dataset first!). Here are some requirements to help guide your design:
+```{r gender chart, echo = FALSE}
+# Load the dataset from the URL
+url <- "https://raw.githubusercontent.com/melaniewalsh/Neat-Datasets/main/us-prison-jail-rates.csv"
+data <- read.csv(url)
 
-- You must have clear x and y axis labels
-- The chart needs a clear title 
-- If you choose to add a color encoding (not required), you need a legend for your different color and a clear legend title
+# Data processing
+data_comparison <- data %>%
+  filter(year == max(year, na.rm = TRUE), !is.na(female_jail_pop_rate), !is.na(male_jail_pop_rate)) %>%
+  group_by(state) %>%
+  summarize(female_jail_pop_rate = mean(female_jail_pop_rate, na.rm = TRUE),
+            male_jail_pop_rate = mean(male_jail_pop_rate, na.rm = TRUE)) %>%
+  pivot_longer(cols = c(female_jail_pop_rate, male_jail_pop_rate), 
+               names_to = "Gender", 
+               values_to = "IncarcerationRate")
+
+# Create a scatter plot comparing male and female incarceration rates by state
+ggplot(data_comparison, aes(x=state, y=IncarcerationRate, color=Gender)) +
+  geom_point(alpha=0.7) +
+  labs(title="Comparison of Male and Female Incarceration Rates by State", 
+       x="State", 
+       y="Incarceration Rate per 100,000 People", 
+       color="Gender") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  scale_color_manual(values=c("female_jail_pop_rate"="pink", "male_jail_pop_rate"="blue"))
+```
+
+- The chart shows the Incarceration Rates per 100,000 people.
+- The chart clearly identifies that much more males are incarcerated than females.
 
 ### Map
 
-Include a chart. Make sure to describe why you included the chart, and what patterns emerged
+This chart shows a geographical distribution of incarceration rates across the United States by visualizing a map of the U.S. with colorcoded regions by incarceration rates per 100,000 people.
 
-The last chart that you will create and include will show how a variable is distributed geographically. Again, think carefully about what such a comparison means and what you want to communicate to your user (you may have to find relevant trends in the dataset first!). Here are some requirements to help guide your design:
+```{r map, echo=FALSE, message=FALSE, warning=FALSE}
+# Load required packages
+library(dplyr)
+library(ggplot2)
+library(maps)
+library(viridis)
 
-- Your map needs a title
-- Your color scale needs a legend with a clear label
-- Use a map based coordinate system to set the aspect ratio of your map
+# Load the dataset from the URL
+url <- "https://raw.githubusercontent.com/melaniewalsh/Neat-Datasets/main/us-prison-jail-rates-1990.csv"
+geo_data <- read.csv(url)
 
+# Process data for mapping
+geo_data_filtered <- geo_data %>%
+  filter(year == max(year, na.rm = TRUE), !is.na(total_jail_pop_rate)) %>%
+  group_by(state) %>%
+  summarize(total_jail_pop_rate = mean(total_jail_pop_rate, na.rm = TRUE))
+
+# Ensure that the state names match those in the spatial data
+geo_data_filtered$state <- tolower(state.name[match(geo_data_filtered$state, state.abb)])
+
+# Create the map
+states <- map_data("state")
+geo_map <- merge(states, geo_data_filtered, by.x = "region", by.y = "state")
+
+# Plot the map
+ggplot(data = geo_map, aes(x = long, y = lat, group = group, fill = total_jail_pop_rate)) +
+  geom_polygon(color = "white") +
+  labs(title = "Geographical Distribution of Incarceration Rates",
+       fill = "Incarceration Rate per 100,000 People") +
+  theme_minimal() +
+  scale_fill_viridis_c(option = "plasma")
+```
+
+- There are noticable regional variations in incarceration rates across the United States. States in the Northeast, Midwest, and West Coast, seem to have lower incarceration rates. States in the South and Southwest tend to have much higher incarceration rates. This may be a reflection of higher crime rates, or issues within the state's government policies that cause more discrepancies for incarcerations.
